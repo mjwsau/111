@@ -1,0 +1,352 @@
+#pragma once
+typedef struct BinaryTree
+{
+	int data;
+	BinaryTree* left;
+	BinaryTree* right;
+	BinaryTree* parent;
+	int height;
+}*AVLTree, AVLNode;
+using namespace std;
+AVLTree root = NULL;
+
+int CalcHeight(AVLTree root);
+int CalcBF(AVLTree root);
+AVLTree LeftRotate(AVLTree root);
+AVLTree RightRotate(AVLTree root);
+void insert(int data);
+AVLTree insert(AVLTree root, int data);
+void Preorder(AVLTree root);
+void inOrder(AVLTree root);
+void Postorder(AVLTree root);
+void PreorderNonRecursive(AVLTree root);
+void inOrderNonRecursive(AVLTree root);
+void PostorderNonRecursive(AVLTree root);
+void showmenu();
+void showmenu() {
+	printf("---------二叉排序树的平衡化---------\n");
+	printf("**************************************\n");
+	printf(" [1]插入结点  	       [2]先序遍历          \n");
+	printf(" [3]中序遍历           [4]后序遍历          \n");
+	printf(" [5]清空数据           [0]退出		         \n");
+	printf("**************************************\n");
+}
+int CalcHeight(AVLTree root) {
+	if (root->left == NULL && root->right == NULL) {
+		return 1;
+	}
+	else if (root->right == NULL) {
+		return root->left->height + 1;
+	}
+	else if (root->left == NULL) {
+		return root->right->height + 1;
+	}
+	else {
+		return root->left->height > root->right->height ? root->left->height + 1 : root->right->height + 1;
+	}
+}
+
+
+int CalcBF(AVLTree root) {
+	if (root == NULL) {
+		return 0;
+	}
+	else if (root->left == NULL && root->right == NULL) {
+		return 0;
+	}
+	else if (root->right == NULL) {
+		return root->left->height;
+	}
+	else if (root->left == NULL) {
+		return -root->right->height;
+	}
+	else {
+		return root->left->height - root->right->height;
+	}
+}
+
+
+AVLTree LeftRotate(AVLTree root) {
+	AVLTree oldRoot = root;
+	AVLTree newRoot = root->right;
+	AVLTree parent = root->parent;
+
+	if (parent != NULL) {
+		if (oldRoot->parent->data > oldRoot->data) {
+			parent->left = newRoot;
+		}
+		else {
+			parent->right = newRoot;
+		}
+	}
+	newRoot->parent = parent;
+
+	oldRoot->right = newRoot->left;
+	if (newRoot->left != NULL) {
+		newRoot->left->parent = oldRoot;
+	}
+
+	newRoot->left = oldRoot;
+	oldRoot->parent = newRoot;
+
+	oldRoot->height = CalcHeight(oldRoot);
+	newRoot->height = CalcHeight(newRoot);
+	return newRoot;
+}
+
+
+AVLTree RightRotate(AVLTree root) {
+	AVLTree oldRoot = root;
+	AVLTree newRoot = root->left;
+	AVLTree parent = root->parent;
+
+	if (parent != NULL) {
+		if (oldRoot->parent->data > oldRoot->data) {
+			parent->left = newRoot;
+		}
+		else {
+			parent->right = newRoot;
+		}
+	}
+	newRoot->parent = parent;
+
+	oldRoot->left = newRoot->right;
+	if (newRoot->right != NULL) {
+		newRoot->right->parent = oldRoot;
+	}
+
+	newRoot->right = oldRoot;
+	oldRoot->parent = newRoot;
+
+	oldRoot->height = CalcHeight(oldRoot);
+	newRoot->height = CalcHeight(newRoot);
+	return newRoot;
+}
+
+
+void insert(int data) {
+	if (root == NULL) {
+		root = new AVLNode;
+		root->data = data;
+		root->height = 1;
+		root->left = NULL;
+		root->right = NULL;
+		root->parent = NULL;
+		return;
+	}
+	root = insert(root, data);
+}
+
+
+AVLTree insert(AVLTree root, int data) {
+	if (data < root->data) {
+		if (root->left == NULL) {
+			root->left = new AVLNode;
+			root->left->data = data;
+			root->left->height = 1;
+			root->left->parent = root;
+			root->left->left = NULL;
+			root->left->right = NULL;
+		}
+		else {
+			insert(root->left, data);
+		}
+	}
+	else if (data > root->data) {
+		if (root->right == NULL) {
+			root->right = new AVLNode;
+			root->right->data = data;
+			root->right->height = 1;
+			root->right->parent = root;
+			root->right->left = NULL;
+			root->right->right = NULL;
+		}
+		else {
+			insert(root->right, data);
+		}
+	}
+
+	root->height = CalcHeight(root);
+
+	if (CalcBF(root) == 2) {
+		if (CalcBF(root->left) == -1) {
+			root->left = LeftRotate(root->left);
+		}
+		root = RightRotate(root);
+	}
+
+	if (CalcBF(root) == -2) {
+		if (CalcBF(root->right) == 1) {
+			root->right = RightRotate(root->right);
+		}
+		root = LeftRotate(root);
+	}
+
+	return root;
+}
+
+
+void Preorder(AVLTree root) {
+	if (root) {
+		cout << "KEY：" << root->data << "  \tBF：" << CalcBF(root) << endl;
+		Preorder(root->left);
+		Preorder(root->right);
+	}
+}
+
+
+void inOrder(AVLTree root) {
+	if (root) {
+		inOrder(root->left);
+		cout << "KEY：" << root->data << "  \tBF：" << CalcBF(root) << endl;
+		inOrder(root->right);
+	}
+}
+
+
+void Postorder(AVLTree root) {
+	if (root) {
+		Postorder(root->left);
+		Postorder(root->right);
+		cout << "KEY：" << root->data << "  \tBF：" << CalcBF(root) << endl;
+	}
+}
+
+
+void PreorderNonRecursive(AVLTree root) {
+	if (root == NULL)
+		return;
+	stack<AVLTree> q;
+	q.push(root);
+	while (!q.empty()) {
+		AVLTree tmp = q.top();
+		cout << "KEY：" << tmp->data << "  \tBF：" << CalcBF(tmp) << endl;
+		q.pop();
+		if (tmp->right)
+			q.push(tmp->right);
+		if (tmp->left)
+			q.push(tmp->left);
+	}
+}
+
+
+void inOrderNonRecursive(AVLTree root) {
+	if (root == NULL) {
+		return;
+	}
+	stack<AVLTree> s;
+	AVLTree tmp = root;
+	while (tmp || !s.empty()) {
+		while (tmp) {
+			s.push(tmp);
+			tmp = tmp->left;
+		}
+		tmp = s.top();
+		s.pop();
+		cout << "KEY：" << tmp->data << "  \tBF：" << CalcBF(tmp) << endl;
+		tmp = tmp->right;
+	}
+}
+
+
+void PostorderNonRecursive(AVLTree root) {
+	if (root == NULL) {
+		return;
+	}
+	stack<AVLTree> s;
+	AVLTree pre = NULL;
+	AVLTree tmp = root;
+	while (tmp || !s.empty()) {
+		while (tmp) {
+			s.push(tmp);
+			tmp = tmp->left;
+		}
+		tmp = s.top();
+		if (!tmp->right || tmp->right == pre) {
+			s.pop();
+			cout << "KEY：" << tmp->data << "  \tBF：" << CalcBF(tmp) << endl;
+			pre = tmp;
+			tmp = NULL;
+		}
+		else {
+			tmp = tmp->right;
+		}
+	}
+}
+#include<iostream>
+#include <vector>
+#include<stack>
+#include"AVLTree.h"
+using namespace std;
+
+
+int main() {
+
+	int key = 0, select = 0;
+
+	while (true) {
+		showmenu();
+		printf("请选择: >");
+		cin >> select;
+		switch (select) {
+		case 1:
+			cout << "请输入结点数据，以空格间隔，回车结束！" << endl << ">";
+			do {
+				cin >> key;
+				insert(key);
+			} while (cin.get() != '\n');
+			system("pause");
+			system("cls");
+			break;
+		case 2:
+			cout << "请选择遍历方式：1.递归  2.非递归" << endl << ">";
+			cin >> select;
+			if (select == 1) {
+				Preorder(root);
+			}
+			else {
+				PreorderNonRecursive(root);
+			}
+			system("pause");
+			system("cls");
+			break;
+		case 3:
+			cout << "请选择遍历方式：1.递归  2.非递归" << endl << ">";
+			cin >> select;
+			if (select == 1) {
+				inOrder(root);
+			}
+			else {
+				inOrderNonRecursive(root);
+			}
+			system("pause");
+			system("cls");
+			break;
+		case 4:
+			cout << "请选择遍历方式：1.递归  2.非递归" << endl << ">";
+			cin >> select;
+			if (select == 1) {
+				Postorder(root);
+			}
+			else {
+				PostorderNonRecursive(root);
+			}
+			system("pause");
+			system("cls");
+			break;
+		case 5:
+			root = NULL;
+			system("pause");
+			system("cls");
+			break;
+		case 0:
+			cout << "系统已退出！" << endl;
+			return 0;
+		default:
+			cout << "输入错误请重新输入！" << endl;
+			break;
+			system("pause");
+			system("cls");
+		}
+	}
+}
